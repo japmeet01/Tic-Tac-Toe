@@ -1,37 +1,53 @@
 import React, { useState } from 'react';
 import Board from './components/Board';
-import './styles/root.scss';
+import History from './components/History';
+
 import { calculateWinner } from './helpers';
+import './styles/root.scss';
 
 const app = () => {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [isXnext, setIsXNext] = useState(false);
+  const [history, setHistory] = useState([
+    { board: Array(9).fill(null), isXnext: true },
+  ]);
 
-  const winner = calculateWinner(board);
+  const [currentMove, setCurrentMove] = useState(0);
+  const current = history[currentMove];
+
+  const winner = calculateWinner(current.board);
 
   const message = winner
     ? `Winner is ${winner}`
-    : `Next Player is ${isXnext ? 'X' : 'O'}`;
+    : `Next Player is ${current.isXnext ? 'X' : 'O'}`;
 
   const handleSquareClick = position => {
-    if (board[position] != null || winner) {
+    if (current.board[position] != null || winner) {
       return;
     }
-    setBoard(prevState => {
-      return prevState.map((square, pos) => {
+    setHistory(prevState => {
+      const last = prevState[prevState.length - 1];
+
+      const newBoard = last.board.map((square, pos) => {
         if (pos === position) {
-          return isXnext ? 'X' : 'O';
+          return last.isXnext ? 'X' : 'O';
         }
         return square;
       });
+      return prevState.concat({ board: newBoard, isXnext: !last.isXnext });
     });
-    setIsXNext(prevState => !prevState);
+
+    setCurrentMove(prevState => prevState + 1);
   };
+
   return (
     <div className="app">
       <h1>Tic Tac Toe Game</h1>
       <h2>{message}</h2>
-      <Board board={board} handleSquareClick={handleSquareClick} />
+      <Board board={current.board} handleSquareClick={handleSquareClick} />
+      <History
+        history={history}
+        moveTo={move => setCurrentMove(move)}
+        currentMove={currentMove}
+      />
     </div>
   );
 };
